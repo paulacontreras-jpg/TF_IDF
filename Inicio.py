@@ -1,83 +1,58 @@
-import streamlit as st
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 import pandas as pd
 import re
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 from nltk.stem import SnowballStemmer
+import streamlit as st
 
-st.set_page_config(page_title="🚀 TF-IDF Espacial", page_icon="🛰️", layout="wide")
+# Configuración de página con temática oscura/espacial
+st.set_page_config(page_title="Radar Espacial TF-IDF", page_icon="🚀")
 
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: radial-gradient(circle at 20% 20%, #0f2027 0%, #203a43 45%, #0b0c10 100%);
-        color: #e6f1ff;
-    }
-    h1, h2, h3 {
-        color: #66fcf1 !important;
-        text-shadow: 0 0 8px rgba(102,252,241,0.5);
-    }
-    .stTextArea textarea, .stTextInput input {
-        background-color: #1f2833 !important;
-        color: #e6f1ff !important;
-        border: 1px solid #45a29e !important;
-    }
-    div.stButton > button {
-        background-color: #45a29e;
-        color: #0b0c10;
-        border-radius: 8px;
-        font-weight: bold;
-    }
-    div.stButton > button:hover {
-        background-color: #66fcf1;
-        color: #0b0c10;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+st.title("🛸 Radar de Transmisiones Espaciales TF-IDF")
 
-st.title("🚀 Demo de TF-IDF con Misiones y Astronautas")
 st.write("""
-Cada línea se trata como una **nave** (puede ser una frase, un párrafo o un texto más largo).  
-⚠️ Los registros y las consultas deben estar en **inglés**, ya que el sistema está configurado para ese idioma.  
-La misión aplica normalización y *stemming* para que palabras como *orbiting* y *orbit* se consideren equivalentes.
+Cada registro se procesa como un **bitácora estelar** (puede ser un mensaje, un reporte o una señal lejana).  
+⚠️ Las bitácoras y la consulta deben registrarse en **inglés**, ya que los sensores analizan dicho idioma.  
+
+El sistema aplica normalización y *stemming* estelar para que términos como *orbiting* y *orbit* coincidan perfectamente.
 """)
 
-# Ejemplo inicial en inglés, ahora con temática espacial
+# Ejemplo inicial en temática espacial
 text_input = st.text_area(
-    "Escribe tus reportes (uno por línea, en inglés):",
-    "The rocket launches loudly.\nThe comet glows at night.\nThe rocket and the comet orbit together."
+    "Ingresa las bitácoras espaciales (una por línea, en inglés):",
+    "The satellite orbits Earth.\nThe rocket travels to Mars.\nThe satellite and rocket send data.",
 )
 
-question = st.text_input("Escribe una pregunta (en inglés):", "Who is orbiting?")
+question = st.text_input("Ingresa la consulta de rastreo (en inglés):", "Which satellite is orbiting?")
 
 # Inicializar stemmer para inglés
 stemmer = SnowballStemmer("english")
+
 
 def tokenize_and_stem(text: str):
     # Pasar a minúsculas
     text = text.lower()
     # Eliminar caracteres no alfabéticos
-    text = re.sub(r'[^a-z\s]', ' ', text)
+    text = re.sub(r"[^a-z\s]", " ", text)
     # Tokenizar (palabras con longitud > 1)
     tokens = [t for t in text.split() if len(t) > 1]
     # Aplicar stemming
     stems = [stemmer.stem(t) for t in tokens]
     return stems
 
-if st.button("🛰️ Calcular TF-IDF y buscar señal"):
+
+if st.button("🚀 Escanear espacio y calcular TF-IDF"):
     documents = [d.strip() for d in text_input.split("\n") if d.strip()]
     if len(documents) < 1:
-        st.warning("⚠️ Ingresa al menos un reporte.")
+        st.warning("⚠️ Detectada ausencia de señal. Ingresa al menos una bitácora.")
     else:
         # Vectorizador con stemming
         vectorizer = TfidfVectorizer(
             tokenizer=tokenize_and_stem,
             stop_words="english",
-            token_pattern=None
+            token_pattern=None,
         )
+
         # Ajustar con documentos
         X = vectorizer.fit_transform(documents)
 
@@ -85,9 +60,10 @@ if st.button("🛰️ Calcular TF-IDF y buscar señal"):
         df_tfidf = pd.DataFrame(
             X.toarray(),
             columns=vectorizer.get_feature_names_out(),
-            index=[f"Nave {i+1}" for i in range(len(documents))]
+            index=[f"Bitácora {i+1}" for i in range(len(documents))],
         )
-        st.write("### 🌌 Matriz TF-IDF (rastros)")
+
+        st.write("### 🌌 Matriz Estelar TF-IDF (stems)")
         st.dataframe(df_tfidf.round(3))
 
         # Vector de la pregunta
@@ -101,22 +77,29 @@ if st.button("🛰️ Calcular TF-IDF y buscar señal"):
         best_doc = documents[best_idx]
         best_score = similarities[best_idx]
 
-        st.write("### 📡 Transmisión y respuesta")
-        st.write(f"**Tu transmisión:** {question}")
-        st.write(f"**Reporte más relevante (Nave {best_idx+1}):** {best_doc}")
-        st.write(f"**Puntaje de similitud:** {best_score:.3f}")
+        st.write("### 🛰️ Consulta e Intercepción")
+        st.write(f"**Tu consulta estelar:** {question}")
+        st.write(f"**Bitácora de mayor resonancia (Bitácora {best_idx+1}):** {best_doc}")
+        st.write(f"**Nivel de coincidencia espectral:** {best_score:.3f}")
 
         # Mostrar todas las similitudes
         sim_df = pd.DataFrame({
-            "Nave": [f"Nave {i+1}" for i in range(len(documents))],
-            "Mensaje": documents,
-            "Similitud": similarities
+            "Bitácora": [f"Bitácora {i+1}" for i in range(len(documents))],
+            "Señal": documents,
+            "Resonancia": similarities,
         })
-        st.write("### ⭐ Puntajes de similitud (ordenados)")
-        st.dataframe(sim_df.sort_values("Similitud", ascending=False))
+        st.write("### 📊 Espectro de Resonancia (ordenado)")
+        st.dataframe(sim_df.sort_values("Resonancia", ascending=False))
 
         # Mostrar coincidencias de stems
         vocab = vectorizer.get_feature_names_out()
         q_stems = tokenize_and_stem(question)
-        matched = [s for s in q_stems if s in vocab and df_tfidf.iloc[best_idx].get(s, 0) > 0]
-        st.write("### 🔭 Stems de la transmisión presentes en el reporte elegido:", matched)
+        matched = [
+            s
+            for s in q_stems
+            if s in vocab and df_tfidf.iloc[best_idx].get(s, 0) > 0
+        ]
+        st.write(
+            "### Stems de la consulta detectados en la bitácora elegida:",
+            matched,
+        )
